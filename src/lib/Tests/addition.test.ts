@@ -10,13 +10,14 @@ describe('Calculatrice', () => {
         calc.addCal('+');
         calc.addCal('2');
         calc.calcul();
-        expect(get(calc.total).total).toBe('3.000000');
+        expect(get(calc.total).total).toBe("3");
+        calc.reset();
     });
 
-    it('devrait gérer la division par zéro', () => {
+    it('devrait retourner une erreur si ce n\'est pas un nombre', () => {
         const calc = new Calculatrice();
-        calc.addCal('1');
-        calc.addCal('/');
+        calc.addCal('a');
+        calc.addCal('+');
         calc.addCal('0');
         calc.calcul();
         calc.total.subscribe((value) => {
