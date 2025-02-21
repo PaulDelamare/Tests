@@ -32,63 +32,60 @@ export class Calculatrice {
 
     public calcul = () => {
         this.total.update((n) => {
-            if ([...n.total].pop() != "+" && [...n.total].pop() != "-") {
-                const result = () => {
-                    try {
-                        let expr: string;
-                        // 🚀 Vérifie si le dernier caractère est un nombre
-                        if (!Number.isNaN(Number(n.total.slice(-1)))) {
-                            expr = n.total
-                                .replaceAll("×", "*")
-                                .replaceAll("x", "*")
-                                .replaceAll("X", "*")
-                                .replaceAll(",", ".");
-                        } else {
-                            expr = n.total.slice(0, -1)
-                                .replaceAll("×", "*")
-                                .replaceAll("x", "*")
-                                .replaceAll("X", "*")
-                                .replaceAll(",", ".");
-                        }
-                        const res = eval(expr);
-                        // 🚀 Si le résultat n'est pas fini (division par 0), on lance une erreur.
-                        if (!isFinite(res)) {
-                            throw new Error("Division par 0");
-                        }
-                        return res.toFixed(6);
-                    } catch (error) {
-                        return "Erreur: division par 0";
-                    }
-                };
-                const res = result();
-                // 🚀 En cas d'erreur, on met à jour le total avec le message d'erreur.
-                if (res.startsWith("Erreur")) {
-                    return { ...n, total: res };
-                } else {
-                    if (n.historic.length >= 5) {
-                        n.historic.shift();
-                    }
-                    return {
-                        historic: [
-                            n.total + " = " + res.toString().replaceAll(".", ","),
-                            ...n.historic,
-                        ],
-                        total: res.toString(),
-                        prev: parseFloat(res),
-                    };
+            // Vérifier si le dernier caractère est un opérateur
+            const lastChar = n.total.slice(-1);
+            if (this.signes.includes(lastChar)) {
+                // Supprimer le dernier caractère s'il s'agit d'un opérateur
+                n.total = n.total.slice(0, -1);
+            }
+
+            // Remplacer les opérateurs et les virgules pour correspondre à l'évaluation JavaScript
+            const expr = n.total
+                .replace(/×/g, '*')
+                .replace(/÷/g, '/')
+                .replace(/,/g, '.');
+
+            try {
+                // Évaluer l'expression
+                const res = eval(expr);
+
+                // Vérifier si le résultat est fini (pas une division par zéro)
+                if (!isFinite(res)) {
+                    throw new Error("Division par 0");
                 }
-            } else {
-                return { ...n };
+
+                // Convertir le résultat en chaîne et remplacer le point par une virgule
+                let resultStr = res.toString().replace('.', ',');
+
+                // Supprimer les zéros inutiles après la virgule
+                if (resultStr.includes(',')) {
+                    resultStr = resultStr.replace(/,?0+$/, '');
+                }
+
+                // Mettre à jour l'historique et le total
+                if (n.historic.length >= 5) {
+                    n.historic.shift();
+                }
+                return {
+                    ...n,
+                    historic: [...n.historic, `${n.total} = ${resultStr}`],
+                    total: resultStr,
+                    prev: res,
+                };
+            } catch (error) {
+                // En cas d'erreur (par exemple, division par zéro), afficher un message d'erreur
+                return { ...n, total: "Erreur: division par 0" };
             }
         });
     };
+
 
 
     public rewind = (a: string) => {
         this.total.update((n) => {
             let withoutSpace = a.replace(/ /g, "");
             withoutSpace = withoutSpace.replace(",", ".");
-            let array = withoutSpace.split("=");
+            const array = withoutSpace.split("=");
             console.log(array);
 
             return { ...n, total: array["0"], prev: parseFloat(array["1"]) };

@@ -56,4 +56,14 @@ describe('Calculatrice', () => {
         calc.reset();
     });
 
+    it('devrait retourner une erreur si ce n\'est pas un nombre', () => {
+        const calc = new Calculatrice();
+        calc.addCal('a');
+        calc.addCal('-');
+        calc.addCal('0');
+        calc.calcul();
+        calc.total.subscribe((value) => {
+            expect(value.total).toBe('Erreur: division par 0');
+        });
+    });
 });
